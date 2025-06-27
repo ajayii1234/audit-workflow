@@ -10,33 +10,33 @@ use Illuminate\Http\Request;
 class UserController extends Controller
 {
     /**
-     * Show all users with their current roles.
+     * Display a listing of all users and their roles.
      */
     public function index()
     {
         // eager-load roles to avoid N+1
         $users = User::with('roles')->get();
-        // only these two roles are promotable
-        $roles = Role::whereIn('name', ['admin','audit','finance'])->get();
+
+        // all possible roles
+        $roles = Role::whereIn('name', ['user','admin','audit','finance'])->get();
 
         return view('admin.users.index', compact('users','roles'));
     }
 
     /**
-     * Attach the given role to the user.
+     * Sync the given user to exactly the chosen role.
      */
     public function promote(Request $request, User $user)
     {
         $request->validate([
-            'role' => ['required','in:admin,audit,finance'],
+            'role' => ['required','in:user,admin,audit,finance'],
         ]);
 
-        $role = Role::where('name', $request->role)->firstOrFail();
+        $role = Role::firstWhere('name', $request->role);
 
-        // Remove all previous roles in this group, then attach only the chosen one:
+        // Remove any other roles and attach only this one
         $user->roles()->sync([$role->id]);
 
-        return back()->with('success', "User promoted to “{$role->name}.”");
+        return back()->with('success', "User role changed to “{$role->name}.”");
     }
-
 }
