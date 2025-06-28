@@ -59,4 +59,14 @@ public function hasRole(string $roleName): bool
     return $this->roles()->where('name', $roleName)->exists();
 }
 
+
+/**
+ * Get all form submissions by this user.
+ */
+public function submissions()
+{
+    return $this->hasMany(FormSubmission::class);
+}
+
+
 }

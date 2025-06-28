@@ -56,11 +56,9 @@
                     </select>
 
                     <button 
-    type="submit"
-    
->
-    Change Role
-</button>
+                            type="submit" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
+                          Change Role
+                      </button>
 
 
                   </form>
