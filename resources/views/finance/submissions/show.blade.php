@@ -9,8 +9,22 @@
     <div class="max-w-2xl mx-auto sm:px-6 lg:px-8 space-y-4">
 
       <div class="bg-white shadow-sm sm:rounded-lg p-6">
-        <p><strong>User:</strong> {{ $submission->user->name }}</p>
+        <p><strong>User:</strong> {{ $submission->user->name }}
+        <span class="text-gray-600">({{ $submission->user->email }})</span>
+      </p>
         <p><strong>Submitted on:</strong> {{ $submission->created_at->format('M d, Y H:i') }}</p>
+        <hr class="my-4">
+
+        <p><strong>Auditor:</strong> {{ $submission->auditor->name ?? '—' }}
+        <span class="text-gray-600">
+    ({{ optional($submission->auditor)->email ?? '—' }})
+  </span>
+      </p>
+      <p><strong>Submitted on:</strong> 
+  {{ $submission->audited_at ? $submission->audited_at->format('M d, Y H:i') : '—' }}
+</p>
+
+
         <hr class="my-4">
 
         <form method="POST" action="{{ route('finance.submissions.update', $submission) }}">
@@ -52,6 +66,23 @@
               <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
             @enderror
           </div>
+
+            <!-- Finance Comment -->
+      <div class="mb-4">
+        <label for="finance_comment" class="block text-sm font-medium text-gray-700">
+          Finance Comment (optional)
+        </label>
+        <textarea
+          id="finance_comment"
+          name="finance_comment"
+          rows="4"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+          placeholder="Any notes for the user…"
+        >{{ old('finance_comment', $submission->finance_comment) }}</textarea>
+        @error('finance_comment')
+          <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+        @enderror
+      </div>
 
           <!-- Decision Buttons -->
           <div class="flex justify-end space-x-2">

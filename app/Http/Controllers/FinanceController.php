@@ -26,24 +26,27 @@ class FinanceController extends Controller
     public function update(Request $request, FormSubmission $submission)
     {
         abort_if($submission->status !== 'pending_finance', 403);
-
+    
         $data = $request->validate([
-            'title_ok'       => 'required|boolean',
-            'description_ok' => 'required|boolean',
+            'title_ok'        => 'required|boolean',
+            'description_ok'  => 'required|boolean',
+            'finance_comment' => 'nullable|string|max:1000',
         ]);
-
+    
         $allOk = $data['title_ok'] && $data['description_ok'];
-
-        $submission->status = $allOk
-            ? 'approved'
-            : 'returned_to_user';
-
+    
+        $submission->status          = $allOk ? 'approved' : 'returned_to_user';
+        $submission->finance_by      = $allOk ? null : $request->user()->id;
+        $submission->finance_at      = $allOk ? null : now();
+        $submission->finance_comment = $data['finance_comment'] ?? null;
         $submission->save();
-
+    
         return redirect()
             ->route('finance.submissions.index')
             ->with('success', $allOk
                 ? 'Submission approved—workflow complete.'
                 : 'Submission returned to user for corrections.');
     }
+    
+    
 }

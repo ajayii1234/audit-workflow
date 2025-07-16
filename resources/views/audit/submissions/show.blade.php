@@ -54,6 +54,24 @@
             @enderror
           </div>
 
+          <!-- Auditor Comment -->
+<div class="mb-4">
+  <label for="audit_comment" class="block text-sm font-medium text-gray-700">
+    Comment (optional)
+  </label>
+  <textarea
+    id="audit_comment"
+    name="audit_comment"
+    rows="4"
+    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+    placeholder="Anything the user should fix…"
+  >{{ old('audit_comment', $submission->audit_comment) }}</textarea>
+  @error('audit_comment')
+    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+  @enderror
+</div>
+
+
           <!-- Submit Decision -->
           <div class="flex justify-end space-x-2">
             <a href="{{ route('audit.submissions.index') }}"

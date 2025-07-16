@@ -6,7 +6,7 @@
   </x-slot>
 
   <div class="py-6">
-    <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 space-y-4">
+    <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-4">
       @if(session('success'))
         <div class="bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded">
           {{ session('success') }}
@@ -25,22 +25,54 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Returned On</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comment</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Returned By</th>
                 <th class="px-6 py-3"></th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               @foreach($submissions as $sub)
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap">{{ $sub->id }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ $sub->title }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ $sub->updated_at->format('M d, Y') }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-right">
-                  <a href="{{ route('user.submissions.edit', $sub) }}"
-                  class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
-                    Edit & Resubmit
-                  </a>
-                </td>
-              </tr>
+                @php
+                  // Determine which timestamp to show
+                  $returnedAt = $sub->finance_at ?? $sub->audited_at;
+                @endphp
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">{{ $sub->id }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap">{{ $sub->title }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    {{ $returnedAt 
+                        ? $returnedAt->format('M d, Y H:i') 
+                        : '—' 
+                    }}
+                  </td>
+                  <td class="px-6 py-4">
+                    @if($sub->finance_at && $sub->finance_comment)
+                      <div class="text-sm text-gray-700 whitespace-pre-wrap">
+                        {{ $sub->finance_comment }}
+                      </div>
+                    @elseif($sub->audit_comment)
+                      <div class="text-sm text-gray-700 whitespace-pre-wrap">
+                        {{ $sub->audit_comment }}
+                      </div>
+                    @else
+                      <span class="text-gray-500">—</span>
+                    @endif
+                  </td>
+
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    @if($sub->finance_at)
+                      Finance ({{ optional($sub->financier)->email ?? '—' }})
+                    @else
+                      Audit ({{ optional($sub->auditor)->email ?? '—' }})
+                    @endif
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right">
+                    <a href="{{ route('user.submissions.edit', $sub) }}"
+                       class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
+                      Edit & Resubmit
+                    </a>
+                  </td>
+                </tr>
               @endforeach
             </tbody>
           </table>
