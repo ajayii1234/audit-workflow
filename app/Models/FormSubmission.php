@@ -10,9 +10,8 @@ class FormSubmission extends Model
 {
     protected $fillable = [
         'user_id',
-        'title',
-        'description',
         'extra_data',
+        'document_path',
         'status',
         'audited_by',
         'audited_at',
@@ -20,6 +19,15 @@ class FormSubmission extends Model
         'finance_by',
         'finance_at',
         'finance_comment',
+
+            // Vendor Info
+    'vendor_name','schema_group','account_group','beneficiary_tin','fax',
+    'bank_name','bank_account_no','vendor_email','region',
+    'purchasing_group','term_of_payment',
+    // Contact Person
+    'contact_title','contact_gender','contact_first_name','contact_last_name',
+    'contact_address','contact_telephone_primary','contact_telephone_secondary',
+    // ...other existing fields...
     ];
 
     /**

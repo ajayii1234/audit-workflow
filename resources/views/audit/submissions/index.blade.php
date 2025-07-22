@@ -24,7 +24,7 @@
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor Name</th>
                 <th class="px-6 py-3"></th>
               </tr>
             </thead>
@@ -33,7 +33,7 @@
               <tr>
                 <td class="px-6 py-4 whitespace-nowrap">{{ $sub->id }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">{{ $sub->user->name }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ $sub->title }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ $sub->vendor_name }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-right">
                   <a href="{{ route('audit.submissions.show', $sub) }}"
                   class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
