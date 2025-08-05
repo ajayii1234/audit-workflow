@@ -207,7 +207,7 @@
               <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
             @enderror
           </div>
-
+                
           {{-- Actions --}}
           <div class="flex justify-end space-x-2">
             <a href="{{ route('user.submissions.returned') }}"

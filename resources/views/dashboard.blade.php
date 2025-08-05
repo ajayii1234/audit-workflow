@@ -19,6 +19,19 @@
                  class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
                 Go to Corrections
               </a>
+
+                <!-- New: My Submissions -->
+              <a href="{{ route('user.submissions.index') }}"
+                class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
+                My Submissions
+              </a>
+
+              @if(auth()->user()->canSearch())
+              <a href="{{ route('user.submissions.search') }}"
+                class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
+                Search Submissions
+              </a>
+              @endif
             @endif
             
             @if(auth()->user()->hasRole('audit'))
@@ -38,7 +51,7 @@
             @if(auth()->user()->hasRole('admin'))
               <a href="{{ url('/admin/users') }}"
                  class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
-                Go to Admin Page
+                Change Roles
               </a>
             @endif
           </div>

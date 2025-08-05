@@ -56,6 +56,13 @@ Route::middleware(['auth','role:admin'])
          // Promote a user to audit or finance
          Route::post('users/{user}/promote', [UserController::class, 'promote'])
               ->name('users.promote');
+
+         // NEW: toggle search access *under* users/
+         Route::post('users/{user}/toggle-search', [UserController::class, 'toggleSearch'])
+              ->name('users.toggle_search');
+
+         // (optional) Admin dashboard
+         Route::get('/', [UserController::class, 'index'])->name('index');
 });
 
 // Only authenticated “user” role may submit forms
@@ -106,19 +113,33 @@ Route::middleware(['auth','role:finance'])
 
 Route::middleware(['auth','role:user'])
      ->group(function () {
-         // …existing create/store routes…
+         // … your create/store/index routes …
 
-         // List returned submissions
+         // 1) My Submissions index
+         Route::get('user/submissions', 
+             [FormSubmissionController::class, 'index'])
+             ->name('user.submissions.index');
+
+         // 2) NEW: Search Submissions page
+         Route::get('user/submissions/search',
+             [FormSubmissionController::class, 'search'])
+             ->name('user.submissions.search');
+
+         // 3) Returned
          Route::get('user/submissions/returned', 
              [FormSubmissionController::class, 'returned'])
              ->name('user.submissions.returned');
 
-         // Edit a returned submission
+         // 4) Show a submission
+         Route::get('user/submissions/{submission}', 
+             [FormSubmissionController::class, 'show'])
+             ->whereNumber('submission')       // ensure numeric
+             ->name('user.submissions.show');
+
+         // 5) Edit & update
          Route::get('user/submissions/{submission}/edit', 
              [FormSubmissionController::class, 'edit'])
              ->name('user.submissions.edit');
-
-         // Update the submission
          Route::put('user/submissions/{submission}', 
              [FormSubmissionController::class, 'update'])
              ->name('user.submissions.update');

@@ -4,10 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class FormSubmission extends Model
 {
+    /**
+     * Mass-assignable attributes.
+     */
     protected $fillable = [
+        // stable external reference
+        'submission_reference',
+
         // core data
         'user_id', 'vendor_name', 'schema_group', 'account_group',
         'beneficiary_tin', 'fax', 'bank_name', 'bank_account_no',
@@ -16,11 +23,12 @@ class FormSubmission extends Model
         'contact_last_name', 'contact_address',
         'contact_telephone_primary', 'contact_telephone_secondary',
         'document_path', 'status',
+
         // audit / finance metadata
         'audited_by', 'audited_at', 'audit_comment',
         'finance_by', 'finance_at', 'finance_comment',
-        // NOTE: you don’t need to add the *_ok flags here if you’re using guarded = []
-        // but you can include them if you prefer explicit fillable
+
+        // audit approval flags
         'audit_document_ok','audit_vendor_name_ok','audit_schema_group_ok',
         'audit_account_group_ok','audit_beneficiary_tin_ok','audit_fax_ok',
         'audit_bank_name_ok','audit_bank_account_no_ok','audit_vendor_email_ok',
@@ -29,6 +37,8 @@ class FormSubmission extends Model
         'audit_contact_first_name_ok','audit_contact_last_name_ok',
         'audit_contact_address_ok','audit_contact_telephone_primary_ok',
         'audit_contact_telephone_secondary_ok',
+
+        // finance approval flags
         'finance_document_ok','finance_vendor_name_ok','finance_schema_group_ok',
         'finance_account_group_ok','finance_beneficiary_tin_ok','finance_fax_ok',
         'finance_bank_name_ok','finance_bank_account_no_ok','finance_vendor_email_ok',
@@ -37,8 +47,11 @@ class FormSubmission extends Model
         'finance_contact_first_name_ok','finance_contact_last_name_ok',
         'finance_contact_address_ok','finance_contact_telephone_primary_ok',
         'finance_contact_telephone_secondary_ok',
-    ];
+    ]; 
 
+    /**
+     * Type casting for attributes.
+     */
     protected $casts = [
         // timestamps
         'created_at'  => 'datetime',
@@ -46,7 +59,10 @@ class FormSubmission extends Model
         'audited_at'  => 'datetime',
         'finance_at'  => 'datetime',
 
-        // audit flags
+        // stable reference
+        'submission_reference' => 'string',
+
+        // audit approval flags
         'audit_document_ok'            => 'boolean',
         'audit_vendor_name_ok'         => 'boolean',
         'audit_schema_group_ok'        => 'boolean',
@@ -67,7 +83,7 @@ class FormSubmission extends Model
         'audit_contact_telephone_primary_ok'   => 'boolean',
         'audit_contact_telephone_secondary_ok' => 'boolean',
 
-        // finance flags
+        // finance approval flags
         'finance_document_ok'            => 'boolean',
         'finance_vendor_name_ok'         => 'boolean',
         'finance_schema_group_ok'        => 'boolean',
@@ -90,6 +106,18 @@ class FormSubmission extends Model
     ];
 
     /**
+     * Boot method to generate a stable UUID reference on first create.
+     */
+    protected static function booted()
+    {
+        static::creating(function ($submission) {
+            if (! $submission->submission_reference) {
+                $submission->submission_reference = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
      * The form belongs to a user.
      */
     public function user(): BelongsTo
@@ -98,7 +126,7 @@ class FormSubmission extends Model
     }
 
     /**
-     * The user who audited.
+     * The user who audited the submission.
      */
     public function auditor(): BelongsTo
     {
@@ -106,7 +134,7 @@ class FormSubmission extends Model
     }
 
     /**
-     * The user who handled finance.
+     * The user who handled finance on the submission.
      */
     public function financier(): BelongsTo
     {

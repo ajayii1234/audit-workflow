@@ -23,6 +23,20 @@ class UserController extends Controller
         return view('admin.users.index', compact('users','roles'));
     }
 
+
+            public function toggleSearch(User $user)
+        {
+            // flip the flag
+            $user->can_search = ! $user->can_search;
+            $user->save();
+
+            return back()->with('success', 
+                $user->can_search
+                ? "Granted search access to {$user->email}."
+                : "Revoked search access from {$user->email}."
+            );
+        }
+
     /**
      * Sync the given user to exactly the chosen role.
      */

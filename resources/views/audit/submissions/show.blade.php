@@ -10,7 +10,10 @@
 
       <div class="bg-white shadow-sm sm:rounded-lg p-6">
         {{-- User + Submitted at --}}
-        <p><strong>User:</strong> {{ $submission->user->name }}</p>
+       
+        <p><strong>User:</strong> {{ $submission->user->name }}
+          <span class="text-gray-600">({{ $submission->user->email }})</span>
+        </p>
         <p><strong>Submitted on:</strong> {{ $submission->created_at->format('M d, Y H:i') }}</p>
         <hr class="my-4">
 

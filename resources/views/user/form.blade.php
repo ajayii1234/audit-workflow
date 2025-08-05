@@ -47,6 +47,7 @@
               <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
             @enderror
           </div> -->
+          
 
           <!-- Vendor Information -->
           <fieldset class="mb-6 border rounded p-4">

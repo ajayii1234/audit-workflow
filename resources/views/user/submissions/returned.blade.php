@@ -24,6 +24,7 @@
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ref.</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor Name</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Returned On</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comment</th>
@@ -34,10 +35,18 @@
             <tbody class="bg-white divide-y divide-gray-200">
               @foreach($submissions as $sub)
                 @php
+                  // compute the latest ID for this reference
+                  $latestForRef = $submissions
+                    ->where('submission_reference', $sub->submission_reference)
+                    ->max('id');
+
                   $returnedAt = $sub->finance_at ?? $sub->audited_at;
                 @endphp
                 <tr>
                   <td class="px-6 py-4 whitespace-nowrap"></td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {{ $sub->submission_reference }}
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap">{{ $sub->vendor_name }}</td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     {{ $returnedAt 
@@ -66,10 +75,13 @@
                     @endif
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right">
-                    <a href="{{ route('user.submissions.edit', $sub) }}"
-                       class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
-                      Edit &amp; Resubmit
-                    </a>
+                    {{-- Only show Edit when this is the latest returned for that reference --}}
+                    @if($sub->id === $latestForRef)
+                      <a href="{{ route('user.submissions.edit', $sub) }}"
+                         class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
+                        Edit
+                      </a>
+                    @endif
                   </td>
                 </tr>
               @endforeach
@@ -80,28 +92,20 @@
     </div>
   </div>
 
-  {{-- Direct DataTables includes --}}
-  <link
-    rel="stylesheet"
-    href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"
-  />
-
+  {{-- DataTables --}}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"/>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
   <script>
     $(function() {
       const table = $('#returned-table').DataTable({
-        columnDefs: [
-          { orderable: false, searchable: false, targets: 0 }
-        ],
+        columnDefs: [{ orderable: false, searchable: false, targets: 0 }],
         order: [[2, 'desc']]
       });
 
-      // On each draw/search/order/page, fill the first column with 1-based row numbers
       table.on('order.dt search.dt page.dt', function() {
         table.column(0, {search:'applied', order:'applied'}).nodes()
-             .each((cell, i) => { cell.innerHTML = i + 1; });
+             .each((cell, i) => cell.innerHTML = i + 1 );
       }).draw();
     });
   </script>

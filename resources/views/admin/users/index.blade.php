@@ -21,6 +21,8 @@
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Role</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change Role</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Can Search?</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -58,11 +60,31 @@
                     <button 
                             type="submit" class="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100">
                           Change Role
-                      </button>
+                    </button>
 
 
                   </form>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+        @if($user->can_search)
+          <span class="text-green-600 font-semibold">Yes</span>
+        @else
+          <span class="text-red-600 font-semibold">No</span>
+        @endif
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm">
+        <form method="POST" action="{{ route('admin.users.toggle_search', $user) }}">
+          @csrf
+          <button 
+            type="submit"
+            class="px-2 py-1 border rounded text-sm 
+                   {{ $user->can_search ? 'bg-red-500 text-white' : 'bg-green-500 text-white' }}
+                   hover:opacity-80"
+          >
+            {{ $user->can_search ? 'Revoke' : 'Grant' }}
+          </button>
+        </form>
+      </td>
               </tr>
             @endforeach
           </tbody>

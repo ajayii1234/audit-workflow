@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'can_search',
     ];
     
     /**
@@ -43,6 +44,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'can_search'  => 'boolean',
         ];
     }
 
@@ -67,6 +69,12 @@ public function submissions()
 {
     return $this->hasMany(FormSubmission::class);
 }
+
+    // helper
+    public function canSearch(): bool
+    {
+        return $this->can_search;
+    }
 
 
 }
