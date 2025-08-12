@@ -8,7 +8,12 @@
 
   <div class="py-6">
     <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-      @if($submissions->isEmpty())
+      @php
+        // Exclude returned submissions from the main list (they appear in corrections view)
+        $visible = $submissions->reject(fn($s) => $s->status === 'returned_to_user');
+      @endphp
+
+      @if($visible->isEmpty())
         <div class="bg-yellow-100 border-yellow-400 text-yellow-700 px-4 py-3 rounded">
           You have not submitted any forms yet.
         </div>
@@ -22,13 +27,11 @@
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Vendor Name</th>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Submitted On</th>
                 <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Comment</nth>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Returned By</th>
                 <th class="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              @foreach($submissions as $sub)
+              @foreach($visible as $sub)
                 @php
                   $comment = $sub->status === 'returned_to_user'
                     ? ($sub->finance_at ? $sub->finance_comment : $sub->audit_comment)
@@ -56,11 +59,6 @@
                           Pending Finance
                         </span>
                         @break
-                      @case('returned_to_user')
-                        <span class="px-2 inline-flex text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                          Returned
-                        </span>
-                        @break
                       @case('approved')
                         <span class="px-2 inline-flex text-xs font-semibold rounded-full bg-green-100 text-green-800">
                           Approved
@@ -70,19 +68,9 @@
                         <span class="text-gray-500">—</span>
                     @endswitch
                   </td>
-                  <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
-                    {{ $comment ?? '—' }}
-                  </td>
-                  <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
-                    {{ $returnedBy ?? '—' }}
-                  </td>
                   <td class="px-4 py-2 whitespace-nowrap text-right">
-                    @if($sub->status === 'returned_to_user')
-                      <a href="{{ route('user.submissions.edit', $sub) }}"
-                         class="px-3 py-1 border rounded text-gray-700 hover:bg-gray-100">
-                        Edit
-                      </a>
-                    @endif
+                    {{-- Edit only appears for returned submissions — but we've excluded them here.
+                         Keep placeholder for future actions (e.g. View) --}}
                   </td>
                 </tr>
               @endforeach
@@ -93,7 +81,7 @@
     </div>
   </div>
 
-  <!-- Datatables includes like returned view -->
+  <!-- Datatables includes -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -106,6 +94,7 @@
         order: [[1, 'asc']]
       });
 
+      // Fill first column with 1-based numbering (updates on order/search/pagination)
       table.on('order.dt search.dt page.dt', function() {
         table.column(0, { search:'applied', order:'applied' })
              .nodes()

@@ -8,13 +8,7 @@ use Illuminate\Support\Str;
 
 class FormSubmission extends Model
 {
-    /**
-     * Mass-assignable attributes.
-     */
     protected $fillable = [
-        // stable external reference
-        'submission_reference',
-
         // core data
         'user_id', 'vendor_name', 'schema_group', 'account_group',
         'beneficiary_tin', 'fax', 'bank_name', 'bank_account_no',
@@ -23,12 +17,10 @@ class FormSubmission extends Model
         'contact_last_name', 'contact_address',
         'contact_telephone_primary', 'contact_telephone_secondary',
         'document_path', 'status',
-
         // audit / finance metadata
         'audited_by', 'audited_at', 'audit_comment',
         'finance_by', 'finance_at', 'finance_comment',
-
-        // audit approval flags
+        // audit flags
         'audit_document_ok','audit_vendor_name_ok','audit_schema_group_ok',
         'audit_account_group_ok','audit_beneficiary_tin_ok','audit_fax_ok',
         'audit_bank_name_ok','audit_bank_account_no_ok','audit_vendor_email_ok',
@@ -37,8 +29,7 @@ class FormSubmission extends Model
         'audit_contact_first_name_ok','audit_contact_last_name_ok',
         'audit_contact_address_ok','audit_contact_telephone_primary_ok',
         'audit_contact_telephone_secondary_ok',
-
-        // finance approval flags
+        // finance flags
         'finance_document_ok','finance_vendor_name_ok','finance_schema_group_ok',
         'finance_account_group_ok','finance_beneficiary_tin_ok','finance_fax_ok',
         'finance_bank_name_ok','finance_bank_account_no_ok','finance_vendor_email_ok',
@@ -47,22 +38,22 @@ class FormSubmission extends Model
         'finance_contact_first_name_ok','finance_contact_last_name_ok',
         'finance_contact_address_ok','finance_contact_telephone_primary_ok',
         'finance_contact_telephone_secondary_ok',
-    ]; 
+        // IT fields
+        'it_submitted', 'it_by', 'it_at', 'it_comment',
 
-    /**
-     * Type casting for attributes.
-     */
+        // submission reference (if you added this earlier)
+        'submission_reference',
+    ];
+
     protected $casts = [
         // timestamps
         'created_at'  => 'datetime',
         'updated_at'  => 'datetime',
         'audited_at'  => 'datetime',
         'finance_at'  => 'datetime',
+        'it_at'       => 'datetime',
 
-        // stable reference
-        'submission_reference' => 'string',
-
-        // audit approval flags
+        // audit flags
         'audit_document_ok'            => 'boolean',
         'audit_vendor_name_ok'         => 'boolean',
         'audit_schema_group_ok'        => 'boolean',
@@ -83,7 +74,7 @@ class FormSubmission extends Model
         'audit_contact_telephone_primary_ok'   => 'boolean',
         'audit_contact_telephone_secondary_ok' => 'boolean',
 
-        // finance approval flags
+        // finance flags
         'finance_document_ok'            => 'boolean',
         'finance_vendor_name_ok'         => 'boolean',
         'finance_schema_group_ok'        => 'boolean',
@@ -103,19 +94,10 @@ class FormSubmission extends Model
         'finance_contact_address_ok'             => 'boolean',
         'finance_contact_telephone_primary_ok'   => 'boolean',
         'finance_contact_telephone_secondary_ok' => 'boolean',
-    ];
 
-    /**
-     * Boot method to generate a stable UUID reference on first create.
-     */
-    protected static function booted()
-    {
-        static::creating(function ($submission) {
-            if (! $submission->submission_reference) {
-                $submission->submission_reference = (string) Str::uuid();
-            }
-        });
-    }
+        // IT flag
+        'it_submitted' => 'boolean',
+    ];
 
     /**
      * The form belongs to a user.
@@ -126,7 +108,7 @@ class FormSubmission extends Model
     }
 
     /**
-     * The user who audited the submission.
+     * The user who audited.
      */
     public function auditor(): BelongsTo
     {
@@ -134,10 +116,18 @@ class FormSubmission extends Model
     }
 
     /**
-     * The user who handled finance on the submission.
+     * The user who handled finance.
      */
     public function financier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'finance_by');
+    }
+
+    /**
+     * The user from IT who marked it submitted to SAP.
+     */
+    public function itUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'it_by');
     }
 }

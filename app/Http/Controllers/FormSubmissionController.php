@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\FormSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;        // ← add this
+use Illuminate\Support\Str;   
 
 class FormSubmissionController extends Controller
 {
@@ -45,47 +47,114 @@ class FormSubmissionController extends Controller
      */
     public function store(Request $request)
     {
+        // 1) Validate everything
         $data = $request->validate([
-            
-        
-            'document'    => ['nullable','file','max:5120'], // max 5MB
+            'document'    => ['nullable', 'file', 'max:5120'], // max 5MB
 
-                    // Vendor Info
-        'vendor_name'              => ['nullable','string','max:255'],
-        'schema_group'             => ['nullable','in:EMANL Import,EMANL Local'],
-        'account_group'            => ['nullable','in:Affiliate,Third Party Local,Third Party Import'],
-        'beneficiary_tin'          => ['nullable','string','max:100'],
-        'fax'                      => ['nullable','string','max:100'],
-        'bank_name'                => ['nullable','string','max:255'],
-        'bank_account_no'          => ['nullable','string','max:100'],
-        'vendor_email'             => ['nullable','email','max:255'],
-        'region'                   => ['nullable','string','max:255'],
-        'purchasing_group'         => ['nullable','in:Stock Material,Non-Stock Material,Services'],
-        'term_of_payment'          => ['nullable','in:Cash,Within 7 Days Due net,Within 14 Days Due net,Within 15 Days Due net,Within 21 Days Due net,Within 30 Days Due net,Within 35 Days Due net,Within 60 Days Due net,Within 90 Days Due net,Within 120 Days Due net'],
-        // Contact Person
-        'contact_title'            => ['nullable','in:Mr,Mrs,Miss'],
-        'contact_gender'           => ['nullable','in:Male,Female'],
-        'contact_first_name'       => ['nullable','string','max:255'],
-        'contact_last_name'        => ['nullable','string','max:255'],
-        'contact_address'          => ['nullable','string'],
-        'contact_telephone_primary'=> ['nullable','string','max:50'],
-        'contact_telephone_secondary'=> ['nullable','string','max:50'],
+            // Vendor Info
+            'vendor_name'              => ['nullable','string','max:255'],
+            'schema_group'             => ['nullable','in:EMANL Import,EMANL Local'],
+            'account_group'            => ['nullable','in:Affiliate,Third Party Local,Third Party Import'],
+            'beneficiary_tin'          => ['nullable','string','max:100'],
+            'fax'                      => ['nullable','string','max:100'],
+            'bank_name'                => ['nullable','string','max:255'],
+            'bank_account_no'          => ['nullable','string','max:100'],
+            'vendor_email'             => ['nullable','email','max:255'],
+            'region'                   => ['nullable','string','max:255'],
+            'purchasing_group'         => ['nullable','in:Stock Material,Non-Stock Material,Services'],
+            'term_of_payment'          => ['nullable','in:Cash,Within 7 Days Due net,Within 14 Days Due net,Within 15 Days Due net,Within 21 Days Due net,Within 30 Days Due net,Within 35 Days Due net,Within 60 Days Due net,Within 90 Days Due net,Within 120 Days Due net'],
+
+            // Contact Person
+            'contact_title'            => ['nullable','in:Mr,Mrs,Miss'],
+            'contact_gender'           => ['nullable','in:Male,Female'],
+            'contact_first_name'       => ['nullable','string','max:255'],
+            'contact_last_name'        => ['nullable','string','max:255'],
+            'contact_address'          => ['nullable','string'],
+            'contact_telephone_primary'=> ['nullable','string','max:50'],
+            'contact_telephone_secondary'=> ['nullable','string','max:50'],
         ]);
-    
-        // Handle file upload
+
+        // 2) Handle file upload
         if ($file = $request->file('document')) {
             $data['document_path'] = $file->store('documents', 'public');
         }
-    
+
+        // 3) Exact‐match check on TIN or exact NAME1
+        $existing = DB::table('vendor_profile')
+            ->where(function($q) use ($data) {
+                $q->where('STENR', $data['beneficiary_tin'])
+                  ->orWhere('STCEG', $data['beneficiary_tin']);
+            })
+            ->orWhere('NAME1', $data['vendor_name'] ?? '')
+            ->first();
+
+        if ($existing) {
+            // if TIN matched
+            if (in_array($data['beneficiary_tin'], [(string)$existing->STENR, (string)$existing->STCEG])) {
+                return back()
+                    ->withErrors(['beneficiary_tin' => 'This TIN already exists in SAP (code '.$existing->LIFNR.').'])
+                    ->withInput();
+            }
+            // if exact name matched
+            return back()
+                ->withErrors(['vendor_name' => 'This vendor name already exists in SAP (code '.$existing->LIFNR.').'])
+                ->withInput();
+        }
+
+        // 4) Fuzzy‐match on common suffix/prefix variants
+        $nameIn = mb_strtolower($data['vendor_name'] ?? '');
+
+        // strip business suffixes
+        $stripSuffix = function(string $s): string {
+            return trim(preg_replace(
+                '/\b(?:limited|ltd|corporation|corp|enterprise|ent|company|co|plc|venture|ven)\b\.?/iu',
+                '',
+                $s
+            ));
+        };
+        // strip personal prefixes
+        $stripPrefix = function(string $s): string {
+            return trim(preg_replace(
+                '/\b(?:alhaji|alh|mister|mr|doctor|dr)\b\.?/iu',
+                '',
+                $s
+            ));
+        };
+
+        $baseIn = $stripSuffix($stripPrefix($nameIn));
+
+        // fetch all existing SAP names
+        $candidates = DB::table('vendor_profile')
+            ->select('LIFNR','NAME1')
+            ->get();
+
+        foreach ($candidates as $row) {
+            $existingName = mb_strtolower($row->NAME1);
+            $baseExist    = $stripSuffix($stripPrefix($existingName));
+
+            if (!empty($baseIn) && $baseIn === $baseExist) {
+                return back()
+                    ->withErrors([
+                        'vendor_name' => "A very similar vendor already exists in SAP (code {$row->LIFNR}). " .
+                                         "Please confirm in SAP before resubmitting."
+                    ])
+                    ->withInput();
+            }
+        }
+
+        // 5) Stamp a submission reference
+        $data['submission_reference'] = strtoupper(Str::random(8));
+        $data['status']               = 'pending_audit';
+
+        // 6) Create
         $submission = $request->user()
                               ->submissions()
                               ->create($data);
-    
+
         return redirect()
             ->route('user.form.create')
-            ->with('success','Form submitted! It’s now pending audit.');
+            ->with('success', 'Form submitted! It’s now pending audit.');
     }
-    
 
     public function returned()
     {

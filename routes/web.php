@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FormSubmissionController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\ITSubmissionController;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -143,6 +144,27 @@ Route::middleware(['auth','role:user'])
          Route::put('user/submissions/{submission}', 
              [FormSubmissionController::class, 'update'])
              ->name('user.submissions.update');
+});
+
+
+Route::middleware(['auth','role:it'])
+     ->prefix('it')
+     ->name('it.')
+     ->group(function () {
+         // static routes first (no parameters)
+         Route::get('submissions/submitted', [ITSubmissionController::class, 'submitted'])
+              ->name('submissions.submitted');
+
+         // list of pending-for-IT submissions
+         Route::get('submissions', [ITSubmissionController::class, 'index'])
+              ->name('submissions.index');
+
+         // parameter routes last
+         Route::get('submissions/{submission}', [ITSubmissionController::class, 'show'])
+              ->name('submissions.show');
+
+         Route::put('submissions/{submission}', [ITSubmissionController::class, 'update'])
+              ->name('submissions.update');
 });
 
 require __DIR__.'/auth.php';

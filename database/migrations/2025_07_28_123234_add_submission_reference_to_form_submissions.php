@@ -14,12 +14,12 @@ return new class extends Migration
 public function up()
 {
     Schema::table('form_submissions', function (Blueprint $table) {
-        $table->string('submission_reference', 36)
-              ->after('id')
-              ->unique()
-              ->nullable(false);
+        if (!Schema::hasColumn('form_submissions', 'submission_reference')) {
+            $table->string('submission_reference', 36)->after('id');
+        }
     });
 }
+
 
 public function down()
 {

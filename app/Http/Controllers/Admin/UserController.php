@@ -18,7 +18,7 @@ class UserController extends Controller
         $users = User::with('roles')->get();
 
         // all possible roles
-        $roles = Role::whereIn('name', ['user','admin','audit','finance'])->get();
+        $roles = Role::whereIn('name', ['user','admin','audit','finance','it'])->get();
 
         return view('admin.users.index', compact('users','roles'));
     }
@@ -43,7 +43,7 @@ class UserController extends Controller
     public function promote(Request $request, User $user)
     {
         $request->validate([
-            'role' => ['required','in:user,admin,audit,finance'],
+            'role' => ['required','in:user,admin,audit,finance,it'],
         ]);
 
         $role = Role::firstWhere('name', $request->role);
